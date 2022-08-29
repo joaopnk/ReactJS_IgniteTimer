@@ -1,0 +1,25 @@
+import styled from 'styled-components';
+
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'success';
+
+interface ButtonContainerProps{
+  variant: ButtonVariant;
+}
+
+const buttonVariants = {
+    primary: 'purple',
+    secondary: 'orange',
+    danger: 'red',
+    success: 'green',
+}
+
+export const ButtonContainer =  styled.button<ButtonContainerProps>`
+    width: 100px;
+    height: 40px;
+
+    /* Incluindo o código (as props) */
+    ${props => {
+        // Aplicando o background, usando a propriedade variant que está recebendo do button
+        return `background-color: ${buttonVariants[props.variant]}`
+    }}
+`;
