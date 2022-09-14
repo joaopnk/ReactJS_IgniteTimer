@@ -22,7 +22,7 @@ const newCycleFormValidationScheme = zod.object({
 type NewCyecleFormData = zod.infer<typeof newCycleFormValidationScheme>
 
 export function Home() {
-  const { register, handleSubmit, watch } = useForm<NewCyecleFormData>({
+  const { register, handleSubmit, watch, reset } = useForm<NewCyecleFormData>({
     resolver: zodResolver(newCycleFormValidationScheme),
     // VAlores iniciais de cada campo
     defaultValues: {
@@ -33,6 +33,8 @@ export function Home() {
 
   function handleCreateNewCycle(data: NewCyecleFormData) {
     console.log(data)
+    // Voltando os campos (resetando) para os valores originais (baseados no defaultValues!)
+    reset()
   }
 
   // Observando o campo de task para habilitar/desabilitar o botão de começar!
