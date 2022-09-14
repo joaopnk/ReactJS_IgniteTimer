@@ -18,12 +18,20 @@ const newCycleFormValidationScheme = zod.object({
   minutesAmount: zod.number().min(5).max(60),
 })
 
+// Criando tipagem a partir da referencia do ZOD (newCycleFormValidationScheme) | usando type of pra referencia o javascript dentro do typescript
+type NewCyecleFormData = zod.infer<typeof newCycleFormValidationScheme>
+
 export function Home() {
-  const { register, handleSubmit, watch } = useForm({
+  const { register, handleSubmit, watch } = useForm<NewCyecleFormData>({
     resolver: zodResolver(newCycleFormValidationScheme),
+    // VAlores iniciais de cada campo
+    defaultValues: {
+      task: '',
+      minutesAmount: 0,
+    },
   })
 
-  function handleCreateNewCycle(data: any) {
+  function handleCreateNewCycle(data: NewCyecleFormData) {
     console.log(data)
   }
 
