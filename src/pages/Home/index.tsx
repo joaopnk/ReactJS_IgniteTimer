@@ -2,6 +2,7 @@ import { Play } from 'phosphor-react'
 import { useForm } from 'react-hook-form'
 import * as zod from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { differenceInSeconds } from 'date-fns'
 import {
   CountDownContainer,
   FormContainer,
@@ -11,7 +12,7 @@ import {
   StartCountdownButton,
   TaskInput,
 } from './styles'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // Obj para regras de validação
 const newCycleFormValidationScheme = zod.object({
@@ -26,6 +27,7 @@ interface Cycle {
   id: string
   task: string
   minutesAmount: number
+  startDate: Date
 }
 
 export function Home() {
@@ -42,6 +44,19 @@ export function Home() {
     },
   })
 
+  // Percorrendo o ciclos procurando o ciclo que esta ativo
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
+
+  useEffect(() => {
+    if (activeCycle) {
+      setInterval(() => {
+        setAmountSecondsPassed(
+          differenceInSeconds(new Date(), activeCycle.startDate),
+        )
+      }, 1000)
+    }
+  }, [activeCycle])
+
   function handleCreateNewCycle(data: NewCyecleFormData) {
     const id = String(new Date().getTime())
 
@@ -49,6 +64,7 @@ export function Home() {
       id,
       task: data.task,
       minutesAmount: data.minutesAmount,
+      startDate: new Date(),
     }
 
     setCycles((state) => [...state, newCycle])
@@ -59,9 +75,6 @@ export function Home() {
     // Voltando os campos (resetando) para os valores originais (baseados no defaultValues!)
     reset()
   }
-
-  // Percorrendo o ciclos procurando o ciclo que esta ativo
-  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
 
   // Se eu tiver um ciclo ativo
   const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
