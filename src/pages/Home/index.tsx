@@ -48,12 +48,18 @@ export function Home() {
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
 
   useEffect(() => {
+    let interval: number
+
     if (activeCycle) {
-      setInterval(() => {
+      interval = setInterval(() => {
         setAmountSecondsPassed(
           differenceInSeconds(new Date(), activeCycle.startDate),
         )
       }, 1000)
+    }
+
+    return () => {
+      clearInterval(interval)
     }
   }, [activeCycle])
 
@@ -72,6 +78,9 @@ export function Home() {
     // Setando o ciclo recem criado como ciclo ativo
     setActiveCycleId(id)
 
+    // Voltando para quantos segundos se passaram
+    setAmountSecondsPassed(0)
+
     // Voltando os campos (resetando) para os valores originais (baseados no defaultValues!)
     reset()
   }
@@ -89,6 +98,13 @@ export function Home() {
   // Metodo para preencher uma string para preencher uma string para um tamanho especifico com algum caracter
   const minutes = String(minutesAmount).padStart(2, '0') // Sempre é pra ter 2 caracteres, caso não tenha, inclui o "0" antes do dig.
   const seconds = String(secondsAmount).padStart(2, '0')
+
+  // Atualizando titulo da pagina quando atualizar o timer
+  useEffect(() => {
+    if (activeCycle) {
+      document.title = `${minutes}:${seconds}`
+    }
+  }, [minutes, seconds, activeCycle])
 
   // Observando o campo de task para habilitar/desabilitar o botão de começar!
   const task = watch('task')
