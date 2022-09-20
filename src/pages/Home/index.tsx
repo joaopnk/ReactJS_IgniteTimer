@@ -30,6 +30,7 @@ interface Cycle {
   minutesAmount: number
   startDate: Date
   interruptedDate?: Date
+  finishedDate?: Date
 }
 
 export function Home() {
@@ -49,21 +50,44 @@ export function Home() {
   // Percorrendo o ciclos procurando o ciclo que esta ativo
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
 
+  // Se eu tiver um ciclo ativo
+  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
+  const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0
+
   useEffect(() => {
     let interval: number
 
     if (activeCycle) {
       interval = setInterval(() => {
-        setAmountSecondsPassed(
-          differenceInSeconds(new Date(), activeCycle.startDate),
+        const secondsDifference = differenceInSeconds(
+          new Date(),
+          activeCycle.startDate,
         )
+        if (secondsDifference >= totalSeconds) {
+          // Alterando o ciclo ativo para anotar a data que foi iterrompido
+          setCycles((state) =>
+            state.map((cycle) => {
+              if (cycle.id === activeCycleId) {
+                return { ...cycle, finishedDate: new Date() }
+              } else {
+                return cycle
+              }
+            }),
+          )
+
+          setAmountSecondsPassed(totalSeconds)
+          clearInterval(interval)
+        } else {
+          // Só irei atualizar o total de segundos, caso o ciclo não tenha sido concluido
+          setAmountSecondsPassed(secondsDifference)
+        }
       }, 1000)
     }
 
     return () => {
       clearInterval(interval)
     }
-  }, [activeCycle])
+  }, [activeCycle, totalSeconds, activeCycleId])
 
   function handleCreateNewCycle(data: NewCyecleFormData) {
     const id = String(new Date().getTime())
@@ -89,8 +113,8 @@ export function Home() {
 
   function handleInterruptCycle() {
     // Alterando o ciclo ativo para anotar a data que foi iterrompido
-    setCycles(
-      cycles.map((cycle) => {
+    setCycles((state) =>
+      state.map((cycle) => {
         if (cycle.id === activeCycleId) {
           return { ...cycle, interruptedDate: new Date() }
         } else {
@@ -102,10 +126,6 @@ export function Home() {
     // Acabando com o ciclo ativo
     setActiveCycleId(null)
   }
-
-  // Se eu tiver um ciclo ativo
-  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
-  const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0
 
   // Arredondando sempre pra baixo
   const minutesAmount = Math.floor(currentSeconds / 60)
