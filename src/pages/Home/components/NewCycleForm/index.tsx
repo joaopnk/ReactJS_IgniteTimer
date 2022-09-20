@@ -1,6 +1,26 @@
 import { FormContainer, MinutesAmountInput, TaskInput } from './styles'
+import * as zod from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+
+// Obj para regras de validação
+const newCycleFormValidationScheme = zod.object({
+  task: zod.string().min(1, 'Informe a tarefa.'),
+  minutesAmount: zod.number().min(5).max(60),
+})
+
+// Criando tipagem a partir da referencia do ZOD (newCycleFormValidationScheme) | usando type of pra referencia o javascript dentro do typescript
+type NewCyecleFormData = zod.infer<typeof newCycleFormValidationScheme>
 
 export function NewCycleForm() {
+  const { register, handleSubmit, watch, reset } = useForm<NewCyecleFormData>({
+    resolver: zodResolver(newCycleFormValidationScheme),
+    // VAlores iniciais de cada campo
+    defaultValues: {
+      task: '',
+      minutesAmount: 0,
+    },
+  })
   return (
     <FormContainer>
       <label htmlFor="task">Vou trabalhar em</label>

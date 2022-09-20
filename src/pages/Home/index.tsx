@@ -4,27 +4,13 @@ import * as zod from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { differenceInSeconds } from 'date-fns'
 import {
-  CountDownContainer,
-  FormContainer,
   HomeContainer,
-  MinutesAmountInput,
-  Separetor,
   StartCountdownButton,
   StopCountdownButton,
-  TaskInput,
 } from './styles'
 import { useEffect, useState } from 'react'
 import { NewCycleForm } from './components/NewCycleForm'
 import { Countdown } from './components/Countdown'
-
-// Obj para regras de validação
-const newCycleFormValidationScheme = zod.object({
-  task: zod.string().min(1, 'Informe a tarefa.'),
-  minutesAmount: zod.number().min(5).max(60),
-})
-
-// Criando tipagem a partir da referencia do ZOD (newCycleFormValidationScheme) | usando type of pra referencia o javascript dentro do typescript
-type NewCyecleFormData = zod.infer<typeof newCycleFormValidationScheme>
 
 interface Cycle {
   id: string
@@ -38,58 +24,11 @@ interface Cycle {
 export function Home() {
   const [cycles, setCycles] = useState<Cycle[]>([])
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
-  const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
-
-  const { register, handleSubmit, watch, reset } = useForm<NewCyecleFormData>({
-    resolver: zodResolver(newCycleFormValidationScheme),
-    // VAlores iniciais de cada campo
-    defaultValues: {
-      task: '',
-      minutesAmount: 0,
-    },
-  })
 
   // Percorrendo o ciclos procurando o ciclo que esta ativo
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
 
-  // Se eu tiver um ciclo ativo
-  const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
   const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0
-
-  useEffect(() => {
-    let interval: number
-
-    if (activeCycle) {
-      interval = setInterval(() => {
-        const secondsDifference = differenceInSeconds(
-          new Date(),
-          activeCycle.startDate,
-        )
-        if (secondsDifference >= totalSeconds) {
-          // Alterando o ciclo ativo para anotar a data que foi iterrompido
-          setCycles((state) =>
-            state.map((cycle) => {
-              if (cycle.id === activeCycleId) {
-                return { ...cycle, finishedDate: new Date() }
-              } else {
-                return cycle
-              }
-            }),
-          )
-
-          setAmountSecondsPassed(totalSeconds)
-          clearInterval(interval)
-        } else {
-          // Só irei atualizar o total de segundos, caso o ciclo não tenha sido concluido
-          setAmountSecondsPassed(secondsDifference)
-        }
-      }, 1000)
-    }
-
-    return () => {
-      clearInterval(interval)
-    }
-  }, [activeCycle, totalSeconds, activeCycleId])
 
   function handleCreateNewCycle(data: NewCyecleFormData) {
     const id = String(new Date().getTime())
@@ -157,7 +96,11 @@ export function Home() {
     <HomeContainer>
       <form onSubmit={handleSubmit(handleCreateNewCycle)} action="">
         <NewCycleForm />
-        <Countdown />
+        <Countdown
+          activeCycle={activeCycle}
+          setCycles={setCycles}
+          activeCycleId={activeCycleId}
+        />
 
         {activeCycle ? (
           <StopCountdownButton onClick={handleInterruptCycle} type="button">
