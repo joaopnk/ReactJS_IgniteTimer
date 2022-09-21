@@ -1,18 +1,12 @@
 import { differenceInSeconds } from 'date-fns'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
+import { CyclesContext } from '../..'
 import { CountDownContainer, Separetor } from './styles'
 
-interface CountdownProps {
-  activeCycle: any
-  setCycles: any
-  activeCycleId: any
-}
+export function Countdown() {
+  const { activeCycle, activeCycleId, markCurrentCycleAsFinished } =
+    useContext(CyclesContext)
 
-export function Countdown({
-  activeCycle,
-  setCycles,
-  activeCycleId,
-}: CountdownProps) {
   const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
 
   const totalSeconds = activeCycle ? activeCycle.minutesAmount * 60 : 0
@@ -29,15 +23,7 @@ export function Countdown({
         )
         if (secondsDifference >= totalSeconds) {
           // Alterando o ciclo ativo para anotar a data que foi iterrompido
-          setCycles((state) =>
-            state.map((cycle) => {
-              if (cycle.id === activeCycleId) {
-                return { ...cycle, finishedDate: new Date() }
-              } else {
-                return cycle
-              }
-            }),
-          )
+          markCurrentCycleAsFinished()
 
           setAmountSecondsPassed(totalSeconds)
           clearInterval(interval)
@@ -51,7 +37,25 @@ export function Countdown({
     return () => {
       clearInterval(interval)
     }
-  }, [activeCycle, totalSeconds, activeCycleId])
+  }, [activeCycle, totalSeconds, activeCycleId, markCurrentCycleAsFinished])
+
+  const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0
+
+  // Arredondando sempre pra baixo
+  const minutesAmount = Math.floor(currentSeconds / 60)
+  // Capturando o quanto resta de 60s (quantos s sobre que não cabem em uma divisão)
+  const secondsAmount = currentSeconds % 60
+
+  // Metodo para preencher uma string para preencher uma string para um tamanho especifico com algum caracter
+  const minutes = String(minutesAmount).padStart(2, '0') // Sempre é pra ter 2 caracteres, caso não tenha, inclui o "0" antes do dig.
+  const seconds = String(secondsAmount).padStart(2, '0')
+
+  // Atualizando titulo da pagina quando atualizar o timer
+  useEffect(() => {
+    if (activeCycle) {
+      document.title = `${minutes}:${seconds}`
+    }
+  }, [minutes, seconds, activeCycle])
 
   return (
     <CountDownContainer>

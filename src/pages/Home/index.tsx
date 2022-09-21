@@ -8,7 +8,7 @@ import {
   StartCountdownButton,
   StopCountdownButton,
 } from './styles'
-import { useEffect, useState } from 'react'
+import { createContext, useEffect, useState } from 'react'
 import { NewCycleForm } from './components/NewCycleForm'
 import { Countdown } from './components/Countdown'
 
@@ -21,6 +21,14 @@ interface Cycle {
   finishedDate?: Date
 }
 
+interface CycleContextType {
+  activeCycle: Cycle | undefined
+  activeCycleId: string | null
+  markCurrentCycleAsFinished: () => void
+}
+
+export const CyclesContext = createContext({} as CycleContextType)
+
 export function Home() {
   const [cycles, setCycles] = useState<Cycle[]>([])
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
@@ -28,29 +36,27 @@ export function Home() {
   // Percorrendo o ciclos procurando o ciclo que esta ativo
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
 
-  const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0
+  // function handleCreateNewCycle(data: NewCyecleFormData) {
+  //   const id = String(new Date().getTime())
 
-  function handleCreateNewCycle(data: NewCyecleFormData) {
-    const id = String(new Date().getTime())
+  //   const newCycle: Cycle = {
+  //     id,
+  //     task: data.task,
+  //     minutesAmount: data.minutesAmount,
+  //     startDate: new Date(),
+  //   }
 
-    const newCycle: Cycle = {
-      id,
-      task: data.task,
-      minutesAmount: data.minutesAmount,
-      startDate: new Date(),
-    }
+  //   setCycles((state) => [...state, newCycle])
 
-    setCycles((state) => [...state, newCycle])
+  //   // Setando o ciclo recem criado como ciclo ativo
+  //   setActiveCycleId(id)
 
-    // Setando o ciclo recem criado como ciclo ativo
-    setActiveCycleId(id)
+  //   // Voltando para quantos segundos se passaram
+  //   setAmountSecondsPassed(0)
 
-    // Voltando para quantos segundos se passaram
-    setAmountSecondsPassed(0)
-
-    // Voltando os campos (resetando) para os valores originais (baseados no defaultValues!)
-    reset()
-  }
+  //   // Voltando os campos (resetando) para os valores originais (baseados no defaultValues!)
+  //   reset()
+  // }
 
   function handleInterruptCycle() {
     // Alterando o ciclo ativo para anotar a data que foi iterrompido
@@ -68,47 +74,41 @@ export function Home() {
     setActiveCycleId(null)
   }
 
-  // Arredondando sempre pra baixo
-  const minutesAmount = Math.floor(currentSeconds / 60)
-
-  // Capturando o quanto resta de 60s (quantos s sobre que não cabem em uma divisão)
-  const secondsAmount = currentSeconds % 60
-
-  // Metodo para preencher uma string para preencher uma string para um tamanho especifico com algum caracter
-  const minutes = String(minutesAmount).padStart(2, '0') // Sempre é pra ter 2 caracteres, caso não tenha, inclui o "0" antes do dig.
-  const seconds = String(secondsAmount).padStart(2, '0')
-
-  // Atualizando titulo da pagina quando atualizar o timer
-  useEffect(() => {
-    if (activeCycle) {
-      document.title = `${minutes}:${seconds}`
-    }
-  }, [minutes, seconds, activeCycle])
+  function markCurrentCycleAsFinished() {
+    setCycles((state) =>
+      state.map((cycle) => {
+        if (cycle.id === activeCycleId) {
+          return { ...cycle, finishedDate: new Date() }
+        } else {
+          return cycle
+        }
+      }),
+    )
+  }
 
   // Observando o campo de task para habilitar/desabilitar o botão de começar!
-  const task = watch('task')
+  // const task = watch('task')
   // Var. auxiliar para ficar mais legivel
-  const isSubmitDisabled = !task
+  // const isSubmitDisabled = !task
 
   console.log(cycles)
 
   return (
     <HomeContainer>
-      <form onSubmit={handleSubmit(handleCreateNewCycle)} action="">
-        <NewCycleForm />
-        <Countdown
-          activeCycle={activeCycle}
-          setCycles={setCycles}
-          activeCycleId={activeCycleId}
-        />
-
+      <form /* onSubmit={handleSubmit(handleCreateNewCycle)} */ action="">
+        <CyclesContext.Provider
+          value={{ activeCycle, activeCycleId, markCurrentCycleAsFinished }}
+        >
+          {/* <NewCycleForm /> */}
+          <Countdown />
+        </CyclesContext.Provider>
         {activeCycle ? (
           <StopCountdownButton onClick={handleInterruptCycle} type="button">
             <HandPalm size={24} />
             Interromper
           </StopCountdownButton>
         ) : (
-          <StartCountdownButton disabled={isSubmitDisabled} type="submit">
+          <StartCountdownButton /* disabled={isSubmitDisabled} */ type="submit">
             <Play size={24} />
             Começar
           </StartCountdownButton>
