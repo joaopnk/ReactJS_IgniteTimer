@@ -1,14 +1,13 @@
 import { HandPalm, Play } from 'phosphor-react'
-import { useForm } from 'react-hook-form'
+import { FormProvider, useForm } from 'react-hook-form'
 import * as zod from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { differenceInSeconds } from 'date-fns'
 import {
   HomeContainer,
   StartCountdownButton,
   StopCountdownButton,
 } from './styles'
-import { createContext, useEffect, useState } from 'react'
+import { createContext, useState } from 'react'
 import { NewCycleForm } from './components/NewCycleForm'
 import { Countdown } from './components/Countdown'
 
@@ -24,39 +23,66 @@ interface Cycle {
 interface CycleContextType {
   activeCycle: Cycle | undefined
   activeCycleId: string | null
+  amountSecondsPassed: number
   markCurrentCycleAsFinished: () => void
+  setSecondsPassed: (seconds: number) => void
 }
+
+// Obj para regras de validação
+const newCycleFormValidationScheme = zod.object({
+  task: zod.string().min(1, 'Informe a tarefa.'),
+  minutesAmount: zod.number().min(5).max(60),
+})
+
+// Criando tipagem a partir da referencia do ZOD (newCycleFormValidationScheme) | usando type of pra referencia o javascript dentro do typescript
+type NewCyecleFormData = zod.infer<typeof newCycleFormValidationScheme>
 
 export const CyclesContext = createContext({} as CycleContextType)
 
 export function Home() {
   const [cycles, setCycles] = useState<Cycle[]>([])
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
+  const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
+
+  const newCycleForm = useForm<NewCyecleFormData>({
+    resolver: zodResolver(newCycleFormValidationScheme),
+    // VAlores iniciais de cada campo
+    defaultValues: {
+      task: '',
+      minutesAmount: 0,
+    },
+  })
+
+  const { handleSubmit, watch, reset } = newCycleForm
 
   // Percorrendo o ciclos procurando o ciclo que esta ativo
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
 
-  // function handleCreateNewCycle(data: NewCyecleFormData) {
-  //   const id = String(new Date().getTime())
+  function setSecondsPassed(seconds: number) {
+    setAmountSecondsPassed(seconds)
+  }
 
-  //   const newCycle: Cycle = {
-  //     id,
-  //     task: data.task,
-  //     minutesAmount: data.minutesAmount,
-  //     startDate: new Date(),
-  //   }
+  function handleCreateNewCycle(data: NewCyecleFormData) {
+    const id = String(new Date().getTime())
 
-  //   setCycles((state) => [...state, newCycle])
+    const newCycle: Cycle = {
+      id,
+      task: data.task,
+      minutesAmount: data.minutesAmount,
+      startDate: new Date(),
+    }
 
-  //   // Setando o ciclo recem criado como ciclo ativo
-  //   setActiveCycleId(id)
+    setCycles((state) => [...state, newCycle])
 
-  //   // Voltando para quantos segundos se passaram
-  //   setAmountSecondsPassed(0)
+    // Setando o ciclo recem criado como ciclo ativo
+    setActiveCycleId(id)
 
-  //   // Voltando os campos (resetando) para os valores originais (baseados no defaultValues!)
-  //   reset()
-  // }
+    // Voltando para quantos segundos se passaram
+    setAmountSecondsPassed(0)
+
+    // Voltando os campos (resetando) para os valores originais (baseados no defaultValues!)
+    reset()
+  }
 
   function handleInterruptCycle() {
     // Alterando o ciclo ativo para anotar a data que foi iterrompido
@@ -87,19 +113,27 @@ export function Home() {
   }
 
   // Observando o campo de task para habilitar/desabilitar o botão de começar!
-  // const task = watch('task')
+  const task = watch('task')
   // Var. auxiliar para ficar mais legivel
-  // const isSubmitDisabled = !task
+  const isSubmitDisabled = !task
 
   console.log(cycles)
 
   return (
     <HomeContainer>
-      <form /* onSubmit={handleSubmit(handleCreateNewCycle)} */ action="">
+      <form onSubmit={handleSubmit(handleCreateNewCycle)} action="">
         <CyclesContext.Provider
-          value={{ activeCycle, activeCycleId, markCurrentCycleAsFinished }}
+          value={{
+            activeCycle,
+            activeCycleId,
+            markCurrentCycleAsFinished,
+            amountSecondsPassed,
+            setSecondsPassed,
+          }}
         >
-          {/* <NewCycleForm /> */}
+          <FormProvider {...newCycleForm}>
+            <NewCycleForm />
+          </FormProvider>
           <Countdown />
         </CyclesContext.Provider>
         {activeCycle ? (
@@ -108,7 +142,7 @@ export function Home() {
             Interromper
           </StopCountdownButton>
         ) : (
-          <StartCountdownButton /* disabled={isSubmitDisabled} */ type="submit">
+          <StartCountdownButton disabled={isSubmitDisabled} type="submit">
             <Play size={24} />
             Começar
           </StartCountdownButton>
