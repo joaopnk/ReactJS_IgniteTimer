@@ -34,7 +34,13 @@ export function Home() {
     },
   })
 
-  const { handleSubmit, watch /* reset */ } = newCycleForm
+  const { handleSubmit, watch, reset } = newCycleForm
+
+  function handleCreateNewCycle(data: NewCyecleFormData) {
+    // Voltando os campos (resetando) para os valores originais (baseados no defaultValues!)
+    createNewCycle(data)
+    reset()
+  }
 
   // Observando o campo de task para habilitar/desabilitar o botão de começar!
   const task = watch('task')
@@ -43,7 +49,7 @@ export function Home() {
 
   return (
     <HomeContainer>
-      <form onSubmit={handleSubmit(createNewCycle)} action="">
+      <form onSubmit={handleSubmit(handleCreateNewCycle)} action="">
         <FormProvider {...newCycleForm}>
           <NewCycleForm />
         </FormProvider>

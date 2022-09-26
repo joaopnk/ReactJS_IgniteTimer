@@ -74,9 +74,6 @@ export function CyclesContextProvider({
 
     // Voltando para quantos segundos se passaram
     setAmountSecondsPassed(0)
-
-    // Voltando os campos (resetando) para os valores originais (baseados no defaultValues!)
-    // reset()
   }
 
   function interruptCurrentCycle() {
