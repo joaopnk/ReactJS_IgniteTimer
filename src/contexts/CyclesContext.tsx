@@ -71,9 +71,6 @@ export function CyclesContextProvider({
 
   function interruptCurrentCycle() {
     dispacth(interruptCurrentCycleAction())
-
-    // Acabando com o ciclo ativo
-    // setActiveCycleId(null)
   }
 
   return (
